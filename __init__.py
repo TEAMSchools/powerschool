@@ -29,9 +29,11 @@ class Client:
 
             # if expired generate new access token
             if datetime.datetime.utcnow() > expiration_datetime:
-                access_token_json = self.generate_access_token()
+                access_token_json = self.generate_access_token(client_id, client_secret)
+
         elif client_id and client_secret:
             access_token_json = self.generate_access_token(client_id, client_secret)
+
         else:
             raise
 
@@ -84,9 +86,7 @@ class Client:
         try:
             response = self.session.request(method, url=url, params=params, data=body)
             response.raise_for_status()
-
             return response.json()
-
         except HTTP_ERROR as e:
             print(e)
 
@@ -114,13 +114,15 @@ class Client:
         return count_response_json['count']
 
     def schema_table_query(self, table_name, id=None, query=None, page=None, page_size=None,
-                            projection='*', students_to_include=None, teachers_to_include=None,
-                            sort=None, sort_descending=None):
+                                projection='*', students_to_include=None, teachers_to_include=None,
+                                sort=None, sort_descending=None):
         if id:
             path = f'/ws/schema/table/{table_name}/{id}'
             query_params = {'projection': projection}
             query_response_json = self._api_request('GET', path, query_params)
+
             return query_response_json['tables'][table_name]
+
         else:
             if page_size == None:
                 page_size = self.metadata.schema_table_query_max_page_size
