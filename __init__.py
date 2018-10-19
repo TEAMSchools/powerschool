@@ -29,10 +29,10 @@ class Client:
 
             # if expired generate new access token
             if datetime.datetime.utcnow() > expiration_datetime:
-                access_token_json = self.generate_access_token(client_id, client_secret)
+                access_token_json = self.generate_access_token(client_id, client_secret, access_token_file)
 
         elif client_id and client_secret:
-            access_token_json = self.generate_access_token(client_id, client_secret)
+            access_token_json = self.generate_access_token(client_id, client_secret, access_token_file)
 
         else:
             raise
@@ -47,7 +47,7 @@ class Client:
 
         return session_headers
 
-    def generate_access_token(self, client_id, client_secret):
+    def generate_access_token(self, client_id, client_secret, access_token_file=None):
         credentials_concatenated = ':'.join((client_id, client_secret))
         credentials_encoded = base64.b64encode(credentials_concatenated.encode('utf-8'))
 
@@ -71,9 +71,12 @@ class Client:
         access_token_json['expiration_timestamp'] = expiration_timestamp
 
         # save access token for future use
-        base_url_parsed = urllib.parse.urlparse(self.base_url)
-        base_url_clean = base_url_parsed.netloc.replace('.', '_')
-        access_token_filepath = f'./{base_url_clean}_access_token.json'
+        if access_token_file:
+            access_token_filepath = access_token_file
+        else:
+            base_url_parsed = urllib.parse.urlparse(self.base_url)
+            base_url_clean = base_url_parsed.netloc.replace('.', '_')
+            access_token_filepath = f'./{base_url_clean}_access_token.json'
 
         with open(access_token_filepath, 'w+') as f:
             json.dump(access_token_json, f)
