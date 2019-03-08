@@ -10,15 +10,19 @@ import math
 HTTP_ERROR = requests.exceptions.HTTPError
 
 class Client:
-    def __init__(self, base_url, client_id, client_secret):
+    def __init__(self, base_url, client_id=None, client_secret=None, access_token_file=None):
+        """
+        """
         self.base_url = base_url
 
         self.session = requests.Session()
-        self.session.headers = self.authorize(client_id, client_secret)
+        self.session.headers = self.authorize(client_id, client_secret, access_token_file)
 
         self.metadata = self._metadata()
 
     def authorize(self, client_id=None, client_secret=None, access_token_file=None):
+        """
+        """
         if os.path.isfile(str(access_token_file)):
             # load cached access token and check for expiration
             with open(access_token_file) as f:
@@ -35,7 +39,7 @@ class Client:
             access_token_json = self.generate_access_token(client_id, client_secret, access_token_file)
 
         else:
-            raise
+            raise Exception("You must provide a valid access token or client credentials.")
 
         access_token = access_token_json['access_token']
         token_type = access_token_json['token_type']
@@ -48,6 +52,8 @@ class Client:
         return session_headers
 
     def generate_access_token(self, client_id, client_secret, access_token_file=None):
+        """
+        """
         credentials_concatenated = ':'.join((client_id, client_secret))
         credentials_encoded = base64.b64encode(credentials_concatenated.encode('utf-8'))
 
@@ -84,6 +90,8 @@ class Client:
         return access_token_json
 
     def _api_request(self, method, path, params=None, body=None):
+        """
+        """
         url = f'{self.base_url}{path}'
 
         try:
@@ -104,6 +112,8 @@ class Client:
             raise e
 
     def _metadata(self):
+        """
+        """
         path = '/ws/v1/metadata'
         response_json = self._api_request('GET', path)
         metadata_dict = response_json['metadata']
@@ -112,6 +122,8 @@ class Client:
         return Metadata(**metadata_dict)
 
     def table_count(self, table_name):
+        """
+        """
         path = f'/ws/schema/table/{table_name}/count'
         count_response_json = self._api_request('GET', path)
         return count_response_json['count']
@@ -119,6 +131,8 @@ class Client:
     def schema_table_query(self, table_name, id=None, query=None, page=None, page_size=None,
                                 projection='*', students_to_include=None, teachers_to_include=None,
                                 sort=None, sort_descending=None):
+        """
+        """
         if id:
             path = f'/ws/schema/table/{table_name}/{id}'
             query_params = {'projection': projection}
@@ -159,9 +173,13 @@ class Client:
                 return query_result
 
     def put_schema_table_record(self, table_name, id, body):
+        """
+        """
         path = f'/ws/schema/table/{table_name}/{id}'
         return self._api_request('PUT', path, body)
 
     def delete_schema_table_record(self, table_name, id):
+        """
+        """
         path = f'/ws/schema/table/{table_name}/{id}'
         return self._api_request('DELETE', path)
