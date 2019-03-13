@@ -1,3 +1,4 @@
+#!/python3.6
 from collections import namedtuple
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -5,13 +6,12 @@ import requests
 import os
 import json
 import datetime
-import urllib
 import math
 
 HTTP_ERROR = requests.exceptions.HTTPError
 
 class Client:
-    def __init__(self, base_url, client_id, client_secret, access_token_path='.'):
+    def __init__(self, base_url, client_id, client_secret, access_token_path='./.tokens'):
         """
         """
         self.base_url = base_url
@@ -19,19 +19,19 @@ class Client:
         self.session = requests.Session()
         self.session.headers = self.authorize(client_id, client_secret, access_token_path)
 
-        self.metadata = self._metadata()
+        metadata_dict = self.metadata()
+        Metadata = namedtuple('Metadata', sorted(metadata_dict))
+        self.metadata = Metadata(**metadata_dict)
 
     def authorize(self, client_id, client_secret, access_token_path):
         """
         """
-        base_url_parsed = urllib.parse.urlparse(self.base_url)
-        base_url_clean = base_url_parsed.netloc.replace('.', '_')
-        access_token_filepath = f'{access_token_path}/{base_url_clean}_access_token.json'
+        access_token_file = f'{access_token_path}/access_token.json'
 
-        if os.path.isfile(str(access_token_filepath)):
+        if os.path.isfile(str(access_token_file)):
             # load cached access token and check for expiration
             print("Loading saved access token...")
-            with open(access_token_filepath) as f:
+            with open(access_token_file) as f:
                 access_token_dict = json.load(f)
 
             expiration_timestamp = access_token_dict['expiration_timestamp']
@@ -40,10 +40,10 @@ class Client:
             # if expired fetch new access token
             if datetime.datetime.utcnow() > expiration_datetime:
                 print("Access token expired...")
-                access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_filepath)
+                access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_file)
 
         elif client_id and client_secret:
-            access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_filepath)
+            access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_path)
 
         else:
             raise Exception("You must provide a valid access token or client credentials.")
@@ -58,7 +58,7 @@ class Client:
 
         return session_headers
 
-    def fetch_access_token(self, client_id, client_secret, access_token_filepath):
+    def fetch_access_token(self, client_id, client_secret, access_token_path):
         """
         """
         print("Generating new access token...")
@@ -78,7 +78,12 @@ class Client:
         access_token_dict['expiration_timestamp'] = expiration_timestamp
 
         # save access token for future use
-        with open(access_token_filepath, 'w+') as f:
+        if not os.path.exists(access_token_path):
+            print(f"Creating folder {access_token_path}")
+            os.makedirs(access_token_path)
+
+        access_token_file = f'{access_token_path}/access_token.json'
+        with open(access_token_file, 'w+') as f:
             json.dump(access_token_dict, f)
 
         return access_token_dict
@@ -96,33 +101,30 @@ class Client:
             print(e)
 
             try:
-                response_json = response.json()
-                print(f"\t{response_json['message']}")
-                for er in response_json['errors']:
+                response_dict = response.json()
+                print(f"\t{response_dict['message']}")
+                for er in response_dict['errors']:
                     print(f"\t\t{er['resource']}: {er['field']} - {er['code']}")
             except:
                 pass
 
             raise e
 
-    def _metadata(self):
+    def metadata(self):
         """
         """
         path = '/ws/v1/metadata'
-        response_json = self._api_request('GET', path)
-        metadata_dict = response_json['metadata']
-
-        Metadata = namedtuple('Metadata', sorted(metadata_dict))
-        return Metadata(**metadata_dict)
+        response_dict = self._api_request('GET', path)
+        return response_dict['metadata']
 
     def schema_table_count(self, table_name):
         """
         """
         path = f'/ws/schema/table/{table_name}/count'
-        count_response_json = self._api_request('GET', path)
-        return count_response_json['count']
+        count_response_dict = self._api_request('GET', path)
+        return count_response_dict['count']
 
-    def schema_table_query(self, table_name, id=None, query=None, page=None,
+    def get_schema_table(self, table_name, id=None, query=None, page=None,
                             page_size=None, projection='*', students_to_include=None,
                             teachers_to_include=None, sort=None, sort_descending=None):
         """
@@ -130,9 +132,9 @@ class Client:
         if id:
             path = f'/ws/schema/table/{table_name}/{id}'
             query_params = {'projection': projection}
-            query_response_json = self._api_request('GET', path, query_params)
+            query_response_dict = self._api_request('GET', path, query_params)
 
-            return query_response_json['tables'][table_name]
+            return query_response_dict['tables'][table_name]
 
         else:
             if page_size == None:
@@ -141,13 +143,13 @@ class Client:
             if query == '':
                 query = None
 
-            table_count = self.table_count(table_name)
+            table_count = self.schema_table_count(table_name)
             if table_count > 0:
                 path = f'/ws/schema/table/{table_name}'
 
                 pages = math.ceil(table_count / page_size)
 
-                query_result = []
+                query_results = []
                 for p in range(pages):
                     query_params = {
                             'q': query,
@@ -159,20 +161,20 @@ class Client:
                             'sort': sort,
                             'sort_descending': sort_descending,
                         }
-                    query_response_json = self._api_request('GET', path, query_params)
+                    query_response_dict = self._api_request('GET', path, query_params)
 
-                    for r in query_response_json['record']:
-                        query_result.append(r['tables'][table_name])
+                    for r in query_response_dict['record']:
+                        query_results.append(r['tables'][table_name])
 
-                return query_result
+                return query_results
 
-    def put_schema_table_record(self, table_name, id, body):
+    def put_schema_table(self, table_name, id, body):
         """
         """
         path = f'/ws/schema/table/{table_name}/{id}'
         return self._api_request('PUT', path, body)
 
-    def delete_schema_table_record(self, table_name, id):
+    def delete_schema_table(self, table_name, id):
         """
         """
         path = f'/ws/schema/table/{table_name}/{id}'
