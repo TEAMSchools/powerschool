@@ -1,48 +1,55 @@
 from collections import namedtuple
+from oauthlib.oauth2 import BackendApplicationClient
+from requests_oauthlib import OAuth2Session
 import requests
 import os
 import json
 import datetime
-import base64
 import urllib
 import math
 
 HTTP_ERROR = requests.exceptions.HTTPError
 
 class Client:
-    def __init__(self, base_url, client_id=None, client_secret=None, access_token_file=None):
+    def __init__(self, base_url, client_id, client_secret, access_token_path='.'):
         """
         """
         self.base_url = base_url
 
         self.session = requests.Session()
-        self.session.headers = self.authorize(client_id, client_secret, access_token_file)
+        self.session.headers = self.authorize(client_id, client_secret, access_token_path)
 
         self.metadata = self._metadata()
 
-    def authorize(self, client_id=None, client_secret=None, access_token_file=None):
+    def authorize(self, client_id, client_secret, access_token_path):
         """
         """
-        if os.path.isfile(str(access_token_file)):
-            # load cached access token and check for expiration
-            with open(access_token_file) as f:
-                access_token_json = json.load(f)
+        base_url_parsed = urllib.parse.urlparse(self.base_url)
+        base_url_clean = base_url_parsed.netloc.replace('.', '_')
+        access_token_filepath = f'{access_token_path}/{base_url_clean}_access_token.json'
 
-            expiration_timestamp = access_token_json['expiration_timestamp']
+        if os.path.isfile(str(access_token_filepath)):
+            # load cached access token and check for expiration
+            print("Loading saved access token...")
+            with open(access_token_filepath) as f:
+                access_token_dict = json.load(f)
+
+            expiration_timestamp = access_token_dict['expiration_timestamp']
             expiration_datetime = datetime.datetime.strptime(expiration_timestamp, '%Y-%m-%d %H:%M:%S.%f')
 
-            # if expired generate new access token
+            # if expired fetch new access token
             if datetime.datetime.utcnow() > expiration_datetime:
-                access_token_json = self.generate_access_token(client_id, client_secret, access_token_file)
+                print("Access token expired...")
+                access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_filepath)
 
         elif client_id and client_secret:
-            access_token_json = self.generate_access_token(client_id, client_secret, access_token_file)
+            access_token_dict = self.fetch_access_token(client_id, client_secret, access_token_filepath)
 
         else:
             raise Exception("You must provide a valid access token or client credentials.")
 
-        access_token = access_token_json['access_token']
-        token_type = access_token_json['token_type']
+        access_token = access_token_dict['access_token']
+        token_type = access_token_dict['token_type']
         session_headers = {
                 'Authorization': f'{token_type} {access_token}',
                 'Accept': 'application/json',
@@ -51,43 +58,30 @@ class Client:
 
         return session_headers
 
-    def generate_access_token(self, client_id, client_secret, access_token_file=None):
+    def fetch_access_token(self, client_id, client_secret, access_token_filepath):
         """
         """
-        credentials_concatenated = ':'.join((client_id, client_secret))
-        credentials_encoded = base64.b64encode(credentials_concatenated.encode('utf-8'))
+        print("Generating new access token...")
+        access_token_url = f'{self.base_url}/oauth/access_token'
 
-        access_url = f'{self.base_url}/oauth/access_token'
-        access_headers = {
-                'Authorization': b'Basic ' + credentials_encoded,
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-            }
-        access_params = {'grant_type': 'client_credentials'}
+        auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+        client = BackendApplicationClient(client_id=client_id)
+        oauth = OAuth2Session(client=client)
 
-        print('Generating new access token...')
-        access_response = self.session.post(access_url, headers=access_headers, params=access_params)
-
-        access_token_json = access_response.json()
+        access_token_dict = oauth.fetch_token(token_url=access_token_url, auth=auth)
 
         # calculate expiration datetime
-        expires_in = int(access_token_json['expires_in'])
+        expires_in = int(access_token_dict['expires_in'])
         created_datetime = datetime.datetime.utcnow()
         expiration_datetime = created_datetime + datetime.timedelta(seconds=expires_in)
         expiration_timestamp = expiration_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')
-        access_token_json['expiration_timestamp'] = expiration_timestamp
+        access_token_dict['expiration_timestamp'] = expiration_timestamp
 
         # save access token for future use
-        if access_token_file:
-            access_token_filepath = access_token_file
-        else:
-            base_url_parsed = urllib.parse.urlparse(self.base_url)
-            base_url_clean = base_url_parsed.netloc.replace('.', '_')
-            access_token_filepath = f'./{base_url_clean}_access_token.json'
-
         with open(access_token_filepath, 'w+') as f:
-            json.dump(access_token_json, f)
+            json.dump(access_token_dict, f)
 
-        return access_token_json
+        return access_token_dict
 
     def _api_request(self, method, path, params=None, body=None):
         """
@@ -121,16 +115,16 @@ class Client:
         Metadata = namedtuple('Metadata', sorted(metadata_dict))
         return Metadata(**metadata_dict)
 
-    def table_count(self, table_name):
+    def schema_table_count(self, table_name):
         """
         """
         path = f'/ws/schema/table/{table_name}/count'
         count_response_json = self._api_request('GET', path)
         return count_response_json['count']
 
-    def schema_table_query(self, table_name, id=None, query=None, page=None, page_size=None,
-                                projection='*', students_to_include=None, teachers_to_include=None,
-                                sort=None, sort_descending=None):
+    def schema_table_query(self, table_name, id=None, query=None, page=None,
+                            page_size=None, projection='*', students_to_include=None,
+                            teachers_to_include=None, sort=None, sort_descending=None):
         """
         """
         if id:
