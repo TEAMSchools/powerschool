@@ -19,7 +19,7 @@ class Client:
         self.session = requests.Session()
         self.session.headers = self.authorize(client_id, client_secret, access_token_path)
 
-        metadata_dict = self.metadata()
+        metadata_dict = self.get_metadata()
         Metadata = namedtuple('Metadata', sorted(metadata_dict))
         self.metadata = Metadata(**metadata_dict)
 
@@ -110,7 +110,7 @@ class Client:
 
             raise e
 
-    def metadata(self):
+    def get_metadata(self):
         """
         """
         path = '/ws/v1/metadata'
