@@ -117,11 +117,15 @@ class Client:
         response_dict = self._api_request('GET', path)
         return response_dict['metadata']
 
-    def schema_table_count(self, table_name):
+    def schema_table_count(self, table_name, query=None):
         """
         """
+        if query == '':
+            query = None
+
         path = f'/ws/schema/table/{table_name}/count'
-        count_response_dict = self._api_request('GET', path)
+        query_params = {'q': query}
+        count_response_dict = self._api_request('GET', path, query_params)
         return count_response_dict['count']
 
     def get_schema_table(self, table_name, id=None, query=None, page=None,
