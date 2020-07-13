@@ -13,20 +13,20 @@ class PowerSchool:
         """
         self.host = host
         self.base_url = f'https://{self.host}'
-        
+        self.access_token = None
+        self.metadata = None        
         self.session = requests.Session()
         self.session.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         }
     
-    def _request(self, method, path, **params):
+    def _request(self, method, path, params={}, data={}):
         """
         """        
-        url = f'{self.base_url}{path}'
-        
+        url = f'{self.base_url}{path}'        
         try:
-            response = self.session.request(method, url=url, params=params)
+            response = self.session.request(method, url=url, params=params, json=data)
             response.raise_for_status()            
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -43,8 +43,7 @@ class PowerSchool:
     def _metadata(self):
         """
         """
-        path = '/ws/v1/metadata'
-        
+        path = '/ws/v1/metadata'        
         response_dict = self._request('GET', path)
         
         metadata_dict = response_dict.get('metadata')
@@ -90,36 +89,75 @@ class PowerSchool:
             # exit - prompt for credientials tuple
             raise Exception("You must provide a valid access token file or client credentials.")
 
-    def schema_table_count(self, table_name, **params):
+    def count(self, count_type, name, body={}, **params):
         """
         """
-        path = f'/ws/schema/table/{table_name}/count'
-        count_response_dict = self._request('GET', path, **params)
+        path = f'/ws/schema/{count_type}/{name}/count'
+        
+        if count_type == 'query':
+            method = 'POST'
+        else:
+            method = 'GET'
+        
+        count_response_dict = self._request(method, path, params, body)
         return count_response_dict.get('count')
 
-    def schema_table_query(self, table_name, row_id=None, page_size=None, projection='*', **params):
+    def schema_table_metadata(self, table_name, **params):
+        path = f'/ws/schema/table/{table_name}/metadata'
+        return self._request('GET', path, params=params)
+    
+    def schema_table_query(self, table_name, row_id=None, page_size=None, projection=None, **params):
         """
         """
         path = f'/ws/schema/table/{table_name}'
-        params.update({'projection': projection})
+        
+        if projection is None:
+            metadata_params = {'expansions': 'access'}
+            table_metadata = self.schema_table_metadata(table_name, **metadata_params)
+            table_columns = table_metadata.get('columns')
+            star_projection = ','.join(
+                [ c.get('name').lower() for c in table_columns if c.get('access') != 'NoAccess' ]
+            )
+            params.update({'projection': star_projection})
+        else:
+            params.update({'projection': projection})
         
         if row_id:
             path = f'{path}/{row_id}'
-            response_dict = self._request('GET', path, **params)
-            return response_dict.get('tables').get(table_name)
+            response_dict = self._request('GET', path, params)
+            return [response_dict.get('tables').get(table_name)]
         else:
             count_params = { k: params.get(k) for k in ['q', 'students_to_include', 'teachers_to_include'] }
-            table_count = self.schema_table_count(table_name, **count_params)
-            if table_count > 0:
+            count = self.count('table', table_name, **count_params)
+            if count > 0:
                 if page_size is None:
                     page_size = self.metadata.schema_table_query_max_page_size
-                pages = math.ceil(table_count / page_size)
                 params.update({'pagesize': page_size})
+                pages = math.ceil(count / page_size)
                 
                 results = []
                 for p in range(pages):
                     params.update({'page': p + 1})
-                    response_dict = self._request('GET', path, **params)
+                    response_dict = self._request('GET', path, params)
                     for r in response_dict.get('record'):
                         results.append(r.get('tables').get(table_name))
                 return results
+    
+    def named_query(self, query_name, page_size=None, body={}, **params):
+        """
+        """
+        path = f'/ws/schema/query/{query_name}'        
+        count = self.count('query', query_name, body)
+        if count > 0:
+            if page_size is None:
+                page_size = self.metadata.schema_table_query_max_page_size
+            params.update({'pagesize': page_size})
+            pages = math.ceil(count / page_size)
+
+            results = []
+            for p in range(pages):
+                params.update({'page': p + 1})
+                response_dict = self._request('POST', path, params, body)
+                for r in response_dict.get('record'):
+                    results.append(r)
+            return results
