@@ -91,15 +91,17 @@ class PowerSchool:
             # exit - prompt for credientials tuple
             raise Exception("You must provide a valid access token file or client credentials.")
 
-    def schema_table(self, table_name):
+    def get_schema_table(self, table_name):
         """
         """
-        return Schema(self, 'table', table_name)
+        self.schema_table = Schema(self, 'table', table_name)
+        return self.schema_table
     
-    def named_query(self, query_name):
+    def get_named_query(self, query_name):
         """
         """
-        return Schema(self, 'query', query_name)
+        self.named_query = Schema(self, 'query', query_name)
+        return self.named_query
     
 class Schema:
     """
