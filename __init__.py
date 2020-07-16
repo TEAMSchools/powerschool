@@ -16,20 +16,20 @@ class PowerSchool:
         self.host = host
         self.base_url = f'https://{self.host}'
         self.access_token = None
-        self.metadata = None        
+        self.metadata = None
         self.session = requests.Session()
         self.session.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         }
-    
+
     def _request(self, method, path, params={}, data={}):
         """
-        """        
-        url = f'{self.base_url}{path}'        
+        """
+        url = f'{self.base_url}{path}'
         try:
             response = self.session.request(method, url=url, params=params, json=data)
-            response.raise_for_status()            
+            response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
             print(e)
@@ -39,19 +39,19 @@ class PowerSchool:
                 for er in response_dict.get('errors'):
                     print(f"\t\t{er.get('resource')}: {er.get('field')} - {er.get('code')}")
             except:
-                pass            
+                pass
             raise e
-    
+
     def _metadata(self):
         """
         """
-        path = '/ws/v1/metadata'        
+        path = '/ws/v1/metadata'
         response_dict = self._request('GET', path)
-        
+
         metadata_dict = response_dict.get('metadata')
         MetadataTuple = namedtuple('Metadata', sorted(metadata_dict))
         return MetadataTuple(**metadata_dict)
-    
+
     def authorize(self, access_token=None, client_credentials=None):
         """
         """
@@ -62,13 +62,13 @@ class PowerSchool:
             now = datetime.now()
             if expires_at > now:
                 self.access_token = access_token
-                self.session.headers['Authorization'] = f"Bearer {self.access_token.get('access_token')}"                
+                self.session.headers['Authorization'] = f"Bearer {self.access_token.get('access_token')}"
                 self.metadata = self._metadata()
                 print("Authorized!")
                 return
             else:
                 print("Access token expired!")
-        
+
         # check for client credentials (tuple)
         if isinstance(client_credentials, tuple):
             client_id, client_secret = client_credentials
@@ -79,7 +79,7 @@ class PowerSchool:
             auth = HTTPBasicAuth(client_id, client_secret)
             client = BackendApplicationClient(client_id=client_id)
             session = OAuth2Session(client=client)
-            
+
             token_dict = session.fetch_token(token_url=token_url, auth=auth)
 
             self.access_token = token_dict
@@ -96,13 +96,13 @@ class PowerSchool:
         """
         self.schema_table = Schema(self, 'table', table_name)
         return self.schema_table
-    
+
     def get_named_query(self, query_name):
         """
         """
         self.named_query = Schema(self, 'query', query_name)
         return self.named_query
-    
+
 class Schema:
     """
     """
@@ -110,12 +110,12 @@ class Schema:
         self.client = client
         self.schema_type = schema_type
         self.name = name
-        
+
         if self.schema_type == 'query':
             self.method = 'POST'
         else:
             self.method = 'GET'
-        
+
     def count(self, body={}, **params):
         """
         """
@@ -129,12 +129,14 @@ class Schema:
             return {}
         else:
             return self.client._request('GET', path, params=params)
-    
-    def query(self, row_id=None, page_size=None, projection=None, body={}, **params):
+
+    def query(self, dcid=None, body={}, **params):
         """
         """
         path = f'/ws/schema/{self.schema_type}/{self.name}'
-        
+        page_size = params.get('pagesize')
+        projection = params.get('projection')
+
         if self.schema_type == 'query':
             pass
         elif projection is None:
@@ -147,9 +149,9 @@ class Schema:
             params.update({'projection': star_projection})
         else:
             params.update({'projection': projection})
-        
-        if row_id:
-            path = f'{path}/{row_id}'
+
+        if dcid:
+            path = f'{path}/{dcid}'
             response_dict = self.client._request('GET', path, params)
             return [response_dict.get('tables').get(self.name)]
         else:
@@ -161,14 +163,14 @@ class Schema:
                 elif page_size is None:
                     page_size = self.client.metadata.schema_table_query_max_page_size
                 params.update({'pagesize': page_size})
-                
+
                 if page_size is None and self.schema_type == 'query':
                     pages = 1
-                elif page_size == 0 and self.schema_type == 'query':
+                elif page_size == 0:
                     pages = 1
                 else:
                     pages = math.ceil(count / page_size)
-                
+
                 results = []
                 for p in range(pages):
                     params.update({'page': p + 1})
