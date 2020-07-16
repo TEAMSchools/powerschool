@@ -153,7 +153,8 @@ class Schema:
 
         if dcid:
             path = f'{path}/{dcid}'
-            response_dict = self.client._request('GET', path, params)
+            filtered_params = { k: params.get(k) for k in ['projection'] }
+            response_dict = self.client._request('GET', path, filtered_params)
             return [response_dict.get('tables').get(self.name)]
         else:
             count = self.count(body, **params)
