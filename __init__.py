@@ -120,7 +120,8 @@ class Schema:
         """
         """
         path = f'/ws/schema/{self.schema_type}/{self.name}/count'
-        count_response_dict = self.client._request(self.method, path, params, body)
+        filtered_params = { k: params.get(k) for k in ['q', 'students_to_include', 'teachers_to_include'] }
+        count_response_dict = self.client._request(self.method, path, filtered_params, body)
         return count_response_dict.get('count')
 
     def metadata(self, **params):
@@ -155,8 +156,7 @@ class Schema:
             response_dict = self.client._request('GET', path, params)
             return [response_dict.get('tables').get(self.name)]
         else:
-            count_params = { k: params.get(k) for k in ['q', 'students_to_include', 'teachers_to_include'] }
-            count = self.count(body, **count_params)
+            count = self.count(body, **params)
             if count > 0:
                 if page_size is None and self.schema_type == 'query':
                     page_size = 0
