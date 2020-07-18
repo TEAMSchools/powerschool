@@ -1,2 +1,2 @@
 # powerschool
-API wrapper for PowerSchool's Data Access Plugin
+API client for PowerSchool
