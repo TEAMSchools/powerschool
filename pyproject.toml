@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "powerschool"
+version = "0.1.0"
+description = "API client for PowerSchool"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+authors = ["Charlie Bini <cbini87@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "^2.24.0"
+requests_oauth = "^0.4.1"
+oauthlib = "^3.1.0"
+python-dateutil = "^2.8.1"
+fiql_parser = "^0.15"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
