@@ -54,9 +54,12 @@ class PowerSchool:
         MetadataTuple = namedtuple('Metadata', sorted(metadata_dict))
         return MetadataTuple(**metadata_dict)
 
-    def authorize(self, access_token=None, client_credentials=None):
+    def authorize(self, **kwargs):
         """
         """
+        access_token = kwargs.get('access_token')
+        client_credentials = kwargs.get('client_credentials')
+
         # check if access token supplied
         if access_token:
             # check if access token is still valid
