@@ -16,6 +16,10 @@ jobs:
         id: tag
         run: |
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
