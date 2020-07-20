@@ -1,14 +1,46 @@
-name: Python package
+name: Release
+
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
+
 jobs:
-  build:
+  Release:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@master
-    - name: Build and publish to pypi
-      uses: JRubics/poetry-publish@v1
-      with:
-        pypi_token: ${{ secrets.PYPI_PASSWORD }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get tag
+        id: tag
+        run: |
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: false
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+      - name: Install dependencies
+        run: |
+          source $HOME/.poetry/env
+          poetry install --no-dev
+      - name: Build project for distribution
+        run: |
+          source $HOME/.poetry/env
+          poetry run poetry build
+      - name: Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          source $HOME/.poetry/env
+          poetry run poetry publish
+          
