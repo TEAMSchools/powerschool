@@ -17,7 +17,7 @@ jobs:
         run: |
           echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: "3.8"
       - name: Create Release
@@ -32,7 +32,7 @@ jobs:
           prerelease: false
       - name: Install Poetry
         run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
       - name: Install dependencies
         run: |
           source $HOME/.poetry/env
