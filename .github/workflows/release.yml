@@ -36,6 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           source $HOME/.poetry/env
+          poetry env use python3
           poetry install --no-dev
       - name: Build project for distribution
         run: |
