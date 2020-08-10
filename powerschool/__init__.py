@@ -1,4 +1,4 @@
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -69,10 +69,9 @@ class PowerSchool:
                 self.access_token = access_token
                 self.session.headers['Authorization'] = f"Bearer {self.access_token.get('access_token')}"
                 self.metadata = self._metadata()
-                print("Authorized!")
-                return
+                return "Authorized!"
             else:
-                print("Access token expired!")
+                return "Access token expired!"
 
         # check for client credentials (tuple)
         if isinstance(client_credentials, tuple):
@@ -90,8 +89,7 @@ class PowerSchool:
             self.access_token = token_dict
             self.session.headers['Authorization'] = f"Bearer {self.access_token.get('access_token')}"
             self.metadata = self._metadata()
-            print("Authorized!")
-            return
+            return "Authorized!"
         else:
             # exit - prompt for credientials tuple
             raise Exception("You must provide a valid access token file or client credentials.")

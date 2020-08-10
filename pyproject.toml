@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "powerschool"
-version = "1.0.0"
+version = "1.0.1"
 description = "powerschool is a Python client for the PowerSchool API"
 homepage = "https://github.com/TEAMSchools/powerschool"
 repository = "https://github.com/TEAMSchools/powerschool"
@@ -9,7 +9,7 @@ readme = "README.md"
 authors = ["Charlie Bini <cbini87@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 requests = "^2.24.0"
 requests_oauth = "^0.4.1"
 oauthlib = "^3.1.0"
