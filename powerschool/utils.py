@@ -33,6 +33,8 @@ def get_constraint_values(selector, arg_value, step_size):
     elif 'date' in selector and type(arg_value) is str:
         arg_value = datetime.datetime.strptime(arg_value, '%Y-%m-%d').date()
         arg_next = arg_value + step_size
+    elif 'date' in selector and isinstance(arg_value, datetime.date):
+        arg_next = arg_value + step_size
     else:
         arg_next = None
     return {'start': arg_value, 'end': arg_next}
