@@ -20,15 +20,19 @@ def get_constraint_rules(selector, yearid=None):
         return {'step_size': 100, 'stop': -termid}
     elif 'date' in selector:
         return {'step_size': relativedelta(years=1), 'stop': datetime.date(2000, 7, 1)}
+    else:
+        return {'step_size': 10000, 'stop': 1}
 
 def get_constraint_values(selector, arg_value, step_size):
-    if selector == 'termid' and arg_value < 0:
+    if selector == 'yearid':
+        arg_next = arg_value + step_size
+    elif selector == 'termid' and arg_value < 0:
         arg_next = arg_value - step_size
     elif 'date' in selector and type(arg_value) is str:
         arg_value = datetime.datetime.strptime(arg_value, '%Y-%m-%d').date()
         arg_next = arg_value + step_size
     else:
-        arg_next = arg_value + step_size
+        arg_next = None
     return {'start': arg_value, 'end': arg_next}
 
 def get_query_expression(selector, start, end):
@@ -37,6 +41,8 @@ def get_query_expression(selector, start, end):
         query_expression.add_element(Constraint(selector, '=gt=', str(end)))
         query_expression.add_element(Operator(';'))
         query_expression.add_element(Constraint(selector, '=le=', str(start)))
+    elif end is None:
+        query_expression.add_element(Constraint(selector, '=ge=', str(start)))
     else:
         query_expression.add_element(Constraint(selector, '=ge=', str(start)))
         query_expression.add_element(Operator(';'))
