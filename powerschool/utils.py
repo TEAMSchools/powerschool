@@ -28,6 +28,8 @@ def get_constraint_values(selector, arg_value, step_size):
         arg_next = arg_value + step_size
     elif selector == 'termid' and arg_value < 0:
         arg_next = arg_value - step_size
+    elif selector == 'termid' and arg_value >= 0:
+        arg_next = arg_value + step_size
     elif 'date' in selector and type(arg_value) is str:
         arg_value = datetime.datetime.strptime(arg_value, '%Y-%m-%d').date()
         arg_next = arg_value + step_size
