@@ -1,4 +1,4 @@
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -148,7 +148,7 @@ class Schema:
             metadata = self.metadata(**metadata_params)
             columns = metadata.get('columns')
             star_projection = ','.join(
-                [ c.get('name').lower() for c in columns if c.get('access') != 'NoAccess' ]
+                [ c.get('name').lower() for c in columns if c.get('access') not in ['NoAccess', 'BlackListNoAccess'] ]
             )
             params.update({'projection': star_projection})
         else:
