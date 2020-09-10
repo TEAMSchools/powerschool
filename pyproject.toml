@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "powerschool"
-version = "2.0.0"
+version = "2.0.1"
 description = "powerschool is a Python client for the PowerSchool API"
 homepage = "https://github.com/TEAMSchools/powerschool"
 repository = "https://github.com/TEAMSchools/powerschool"

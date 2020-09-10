@@ -1,6 +1,10 @@
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
-from oauthlib.oauth2 import BackendApplicationClient
+from oauthlib.oauth2 import (
+    BackendApplicationClient,
+    TokenExpiredError,
+    InvalidClientError,
+)
 from requests_oauthlib import OAuth2Session
 from requests.auth import HTTPBasicAuth
 import requests
@@ -41,7 +45,7 @@ class PowerSchool:
                 self.metadata = self._metadata()
                 return "Authorized!"
             else:
-                return "Access token expired!"
+                raise TokenExpiredError("Access token expired!")
 
         # check for client credentials (tuple)
         if isinstance(auth, tuple):
@@ -62,8 +66,7 @@ class PowerSchool:
             self.metadata = self._metadata()
             return "Authorized!"
         else:
-            # exit - prompt for credientials tuple
-            raise Exception(
+            raise InvalidClientError(
                 "You must provide a valid access token file or client credentials."
             )
 
