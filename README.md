@@ -10,26 +10,27 @@ pip install powerschool
 ## Getting Started
 1. Ensure you have a valid [plugin](https://support.powerschool.com/developer/#/page/plugin-xml) installed with the proper data access provisioned for your purposes.
    
-2. Instantiate the client by passing the host name of your server.
-    ```python
+2. Instantiate a client by passing the host name of your server and one form of authentication:
+   - client credentials (tuple)
+   ```python
     import powerschool
-    ps = powerschool.PowerSchool('my.host.name')
-    ```
-
-3. Authorize the client using:
-    - client credentials (tuple)
-    ```python
-    my_credentials = (client_id, client_secret)
-    ps.authorize(client_credentials=my_credentials)
-    ```
-
-    - a previously saved access token (dict)
-    ```python
-    with open(token_file, 'r') as f:
-        my_token = json.load(f)
     
-    ps.authorize(access_token=my_token)
+    client_id = 'CLi3N7-Id'
+    client_secret = 'cL13N7-53cR37'
+    my_credentials = (client_id, client_secret)
+    
+    ps = powerschool.PowerSchool('my.host.name', auth=my_credentials)
     ```
+   - access token (dict)
+   ```python
+    import powerschool
+    
+    with open('/path/to/token_file.json', 'r') as f:
+        my_token = json.load(f)
+        
+    ps = powerschool.PowerSchool('my.host.name', auth=my_token)
+    ```
+
 
 ## Usage
 >*Refer to the [docs](https://support.powerschool.com/developer/#/page/data-access) for full functionality, including resources, searching, and pagination.*
@@ -74,10 +75,12 @@ payload = {
 powerquery.query(body=payload)
 ```
 
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
 
 ## Notice
 PowerSchool® is a registered trademark in the U.S. and/or other countries owned by PowerSchool Education, Inc. or its affiliates. PowerSchool® is used under license.
