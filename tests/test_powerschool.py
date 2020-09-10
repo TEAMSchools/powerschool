@@ -2,4 +2,4 @@ from powerschool import __version__
 
 
 def test_version():
-    assert __version__ == '1.0.6'
+    assert __version__ == "2.0.0"
