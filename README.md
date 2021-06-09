@@ -1,6 +1,14 @@
 # PowerSchool
 powerschool is a Python client for the [PowerSchool SIS](https://www.powerschool.com/solutions/student-information-system/powerschool-sis) API
 
+## Table of Contents
+
+* [Installation](#installation)
+* [Getting Started](#getting-started)
+* [Usage](#usage)
+* [Contributing](#contributing)
+* [Notice](#notice)
+
 ## Installation
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install powerschool.
 ```bash
