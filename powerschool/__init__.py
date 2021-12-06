@@ -17,7 +17,7 @@ import math
 class PowerSchool:
     """"""
 
-    def __init__(self, host, auth):
+    def __init__(self, host, **kwargs):
         self.host = host
         self.base_url = f"https://{self.host}"
         self.access_token = None
@@ -28,7 +28,9 @@ class PowerSchool:
             "Content-Type": "application/json",
         }
 
-        self.authorize(auth)
+        auth = kwargs.get("auth")
+        if auth:
+            self.authorize(auth)
 
     def authorize(self, auth):
         """"""
