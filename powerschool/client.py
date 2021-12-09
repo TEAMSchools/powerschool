@@ -31,43 +31,38 @@ class PowerSchool:
 
     def authorize(self, auth):
         """"""
-        # check for access token (dict)
+        # access token (dict)
         if isinstance(auth, dict):
             # check if access token is still valid
             expires_at = datetime.fromtimestamp(auth.get("expires_at"))
             now = datetime.now()
             if expires_at > now:
                 self.access_token = auth
-                self.session.headers[
-                    "Authorization"
-                ] = f"Bearer {self.access_token.get('access_token')}"
-                self.metadata = self.get_plugin_metadata()
-                return True
             else:
                 raise TokenExpiredError("Access token expired!")
 
-        # check for client credentials (tuple)
+        # client credentials (tuple)
         if isinstance(auth, tuple):
-            client_id, client_secret = auth
-
             # fetch new access token
             token_url = f"{self.base_url}/oauth/access_token/"
-            auth = HTTPBasicAuth(client_id, client_secret)
+            client_id, client_secret = auth
+
             client = BackendApplicationClient(client_id=client_id)
             session = OAuth2Session(client=client)
 
-            token_dict = session.fetch_token(token_url=token_url, auth=auth)
+            auth = HTTPBasicAuth(client_id, client_secret)
 
-            self.access_token = token_dict
-            self.session.headers[
-                "Authorization"
-            ] = f"Bearer {self.access_token.get('access_token')}"
-            self.metadata = self.get_plugin_metadata()
-            return True
+            self.access_token = session.fetch_token(token_url=token_url, auth=auth)
         else:
             raise InvalidClientError(
                 "You must provide a valid access token file or client credentials."
             )
+
+        self.session.headers[
+            "Authorization"
+        ] = f"Bearer {self.access_token.get('access_token')}"
+        self.metadata = self.PluginMetadata(self.get_plugin_metadata())
+        return True
 
     def _request(self, method, path, params={}, data={}):
         """"""
@@ -85,18 +80,27 @@ class PowerSchool:
                     f"\t{er.get('resource')}: {er.get('field')} - {er.get('code')}\n"
                     for er in errors
                 ]
-                raise xc(f"{error_msg}\n{errors_str}")
+                xc_msg = f"{error_msg}\n{errors_str}"
+                raise xc(xc_msg)
             except:
                 pass
             raise xc
 
     def get_plugin_metadata(self):
-        """"""
-        path = "ws/v1/metadata"
-        response_dict = self._request("GET", path)
+        """
+        List PowerSchool metadata and maximum page sizes of each resources.
+        Maximum page size is a plugin-specific value that determines the maximum
+        number of records allowed on a page.
+        """
+        response = self._request(method="GET", path="ws/v1/metadata")
+        return response.get("metadata")
 
-        metadata_dict = response_dict.get("metadata")
-        return ClientMetadata(metadata_dict)
+    def list_named_queries(self, **kwargs):
+        """"""
+        response = self._request(
+            method="GET", path="ws/schema/query/api", params=kwargs
+        )
+        return response
 
     def get_schema_table(self, table_name):
         """"""
@@ -108,13 +112,9 @@ class PowerSchool:
         self.named_query = Schema(self, query_name, "query")
         return self.named_query
 
-
-class ClientMetadata:
-    """"""
-
-    def __init__(self, metadata):
-        for k, v in metadata.items():
-            setattr(self, k, v)
+    class PluginMetadata:
+        def __init__(self, metadata):
+            self.__dict__ = metadata
 
 
 class Schema:
@@ -166,7 +166,7 @@ class Schema:
         """
         Performs a query on a table and returns either a single row or paged results.
         """
-        pk = kwargs.pop("pk")
+        pk = kwargs.pop("pk", None)
         body = kwargs.pop("body", {})
 
         projection = kwargs.get("projection")
