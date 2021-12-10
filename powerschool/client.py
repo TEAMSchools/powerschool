@@ -232,8 +232,7 @@ class Schema:
                 }
 
                 for p in range(n_pages):
-                    if page is None:
-                        params.update({"page": p + 1})
+                    params.update({"page": p + 1})
 
                     response = self.client._request(
                         method=self.query_method,
@@ -242,11 +241,11 @@ class Schema:
                         data=body,
                     )
 
-                for r in response.get("record"):
-                    if self.schema_type == "query":
-                        data.append(r)
-                    else:
-                        data.append(r.get("tables").get(self.name))
+                    for r in response.get("record"):
+                        if self.schema_type == "query":
+                            data.append(r)
+                        else:
+                            data.append(r.get("tables").get(self.name))
 
             return data
 
