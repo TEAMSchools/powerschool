@@ -167,8 +167,8 @@ class Schema:
         Performs a query on a table and returns either a single row or paged results.
         """
         pk = kwargs.pop("pk", None)
-        body = kwargs.pop("body", {})
 
+        body = kwargs.get("body", {})
         projection = kwargs.get("projection")
         page_size = kwargs.get("pagesize")
         page = kwargs.get("page")
