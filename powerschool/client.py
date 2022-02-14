@@ -8,6 +8,7 @@ from oauthlib.oauth2 import (
     TokenExpiredError,
 )
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError
 from requests_oauthlib import OAuth2Session
 
 
@@ -68,15 +69,18 @@ class PowerSchool:
         """"""
         if data is None:
             data = {}
+
         if params is None:
             params = {}
+
         url = f"{self.base_url}/{path}"
         response = self.session.request(method, url=url, params=params, json=data)
+
         try:
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as xc:
-            raise SystemExit(xc.response.text)
+        except HTTPError as xc:
+            raise HTTPError(xc.response.text)
 
     def get_plugin_metadata(self):
         """
