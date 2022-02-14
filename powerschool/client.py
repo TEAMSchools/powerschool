@@ -150,12 +150,14 @@ class Schema:
             k: kwargs.get(k)
             for k in ["q", "students_to_include", "teachers_to_include"]
         }
+
         response = self.client._request(
             method=self.query_method,
             path=f"{self.path}/count",
             params=params,
             data=body,
         )
+
         return response.get("count")
 
     def query(self, **kwargs):
