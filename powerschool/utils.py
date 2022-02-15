@@ -59,15 +59,15 @@ def get_query_expression(selector, start, end):
 
 
 def generate_historical_queries(current_yearid, query_constraint_selector):
-    ## transform yearid to constraint value
+    # transform yearid to constraint value
     max_constraint_value = transform_yearid(current_yearid, query_constraint_selector)
 
-    ## get step and stoppage critera for constraint type
+    # get step and stoppage critera for constraint type
     constraint_rules = get_constraint_rules(query_constraint_selector, current_yearid)
     stop_constraint_value = constraint_rules["stop"]
     constraint_step_size = constraint_rules["step_size"]
 
-    ## generate probing queries
+    # generate probing queries
     working_constraint_value = max_constraint_value
     probing_query_expressions = []
     while working_constraint_value >= stop_constraint_value:
