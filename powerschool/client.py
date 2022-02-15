@@ -32,8 +32,7 @@ class PowerSchool:
 
     def authorize(self, auth):
         """"""
-        # access token (dict)
-        if isinstance(auth, dict):
+        if isinstance(auth, dict):  # access token (dict)
             # check if access token is still valid
             expires_at = datetime.fromtimestamp(auth.get("expires_at"))
             now = datetime.now()
@@ -41,9 +40,7 @@ class PowerSchool:
                 self.access_token = auth
             else:
                 raise TokenExpiredError("Access token expired!")
-
-        # client credentials (tuple)
-        if isinstance(auth, tuple):
+        elif isinstance(auth, tuple):  # client credentials (tuple)
             # fetch new access token
             token_url = f"{self.base_url}/oauth/access_token/"
             client_id, client_secret = auth
