@@ -1,7 +1,7 @@
-from fiql_parser import Expression, Constraint, Operator, parse_str_to_expression
+import datetime
 
 from dateutil.relativedelta import relativedelta
-import datetime
+from fiql_parser import Constraint, Expression, Operator, parse_str_to_expression
 
 
 def transform_yearid(yearid, selector):
