@@ -39,9 +39,9 @@ def get_constraint_values(selector, value, step_size):
         value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
 
     if step_size:
-        return {"start": value, "end": (value + step_size)}
+        return {"start_value": value, "end_value": (value + step_size)}
     else:
-        return {"start": value, "end": None}
+        return {"start_value": value, "end_value": None}
 
 
 def get_query_expression(selector, start_value, end_value):
