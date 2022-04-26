@@ -70,7 +70,7 @@ def generate_historical_queries(year_id, selector, max_value=None):
     # generate probing queries
     working_value = max_value
     probing_query_expressions = []
-    while working_value >= (stop_value + step_size):
+    while (working_value + step_size) >= stop_value:
         constraint_values = get_constraint_values(selector, working_value, step_size)
         query_expression = get_query_expression(selector, **constraint_values)
         probing_query_expressions.append(query_expression)
