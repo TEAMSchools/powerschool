@@ -1,6 +1,6 @@
 [project]
 name = "powerschool"
-version = "3.4.0"
+version = "3.4.1"
 description = "Python client for the PowerSchool API"
 authors = [
     {name = "Charlie Bini", email = "5003326+cbini@users.noreply.github.com"},
