@@ -12,8 +12,6 @@ def transform_year_id(year_id, selector):
     elif "date" in selector:
         academic_year = year_id + 1990
         return datetime.date(academic_year, 7, 1)
-    elif selector[-2:] == "id":
-        return year_id * 100000
     else:
         return None
 
@@ -27,7 +25,7 @@ def get_constraint_rules(selector, year_id=None, is_historical=False):
     elif "date" in selector:
         return {"step_size": relativedelta(years=1), "stop": datetime.date(2000, 7, 1)}
     elif is_historical:
-        return {"step_size": 10000, "stop": 0}
+        return {"step_size": 100000, "stop": 0}
     else:
         return {"step_size": None, "stop": 0}
 
@@ -81,7 +79,7 @@ def generate_historical_queries(year_id, selector, max_value=None):
 
 
 def parse_fiql_selector(query_string):
-    # parse query string to get selector
+    """parse query string to get selector"""
     query_expression = parse_str_to_expression(query_string)
     query_constraint = query_expression.elements[0]
     return query_constraint.selector
