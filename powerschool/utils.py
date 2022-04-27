@@ -16,18 +16,21 @@ def transform_year_id(year_id, selector):
         return None
 
 
-def get_constraint_rules(selector, year_id=None, is_historical=False):
+def get_constraint_rules(selector, **kwargs):
     if selector == "yearid":
-        return {"step_size": 1, "stop": 10}
+        return {"step_size": 1, "stop_value": 10}
     elif selector == "termid":
-        term_id = transform_year_id(year_id, "termid")
-        return {"step_size": 100, "stop": -term_id}
+        term_id = transform_year_id(kwargs.get("year_id"), "termid")
+        return {"step_size": 100, "stop_value": -term_id}
     elif "date" in selector:
-        return {"step_size": relativedelta(years=1), "stop": datetime.date(2000, 7, 1)}
-    elif is_historical:
-        return {"step_size": 100000, "stop": 0}
+        return {
+            "step_size": relativedelta(years=1),
+            "stop_value": datetime.date(2000, 7, 1),
+        }
+    elif kwargs.get("is_historical"):
+        return {"step_size": 10000, "stop_value": 0}
     else:
-        return {"step_size": None, "stop": 0}
+        return {"step_size": None, "stop_value": 0}
 
 
 def get_constraint_values(selector, value, step_size):
@@ -57,24 +60,17 @@ def get_query_expression(selector, start_value, end_value):
     return str(query_expression)
 
 
-def generate_historical_queries(year_id, selector, max_value=None):
-    # transform yearid to constraint value
-    if not max_value:
-        max_value = transform_year_id(year_id, selector)
-
-    # get step and stoppage critera for constraint type
-    constraint_rules = get_constraint_rules(selector, year_id, is_historical=True)
-    stop_value = constraint_rules["stop"]
-    step_size = constraint_rules["step_size"]
-
-    # generate probing queries
-    working_value = max_value
+def generate_historical_queries(selector, start_value, stop_value, step_size):
+    """generate probing queries"""
     probing_query_expressions = []
+    working_value = start_value
+
     while (working_value + step_size) >= stop_value:
         constraint_values = get_constraint_values(selector, working_value, step_size)
         query_expression = get_query_expression(selector, **constraint_values)
         probing_query_expressions.append(query_expression)
         working_value = working_value - step_size
+
     return probing_query_expressions
 
 
