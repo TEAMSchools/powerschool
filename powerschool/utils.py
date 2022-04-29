@@ -45,7 +45,7 @@ def get_constraint_values(selector, value, step_size):
         return {"start_value": value, "end_value": None}
 
 
-def get_query_expression(selector, start_value, end_value):
+def get_query_expression(selector, start_value, end_value=None):
     query_expression = Expression()
     if end_value is None:
         query_expression.add_element(Constraint(selector, "=ge=", str(start_value)))
