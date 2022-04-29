@@ -47,12 +47,12 @@ def get_constraint_values(selector, value, step_size):
 
 def get_query_expression(selector, start_value, end_value):
     query_expression = Expression()
-    if type(start_value) is int and end_value < start_value:
+    if end_value is None:
+        query_expression.add_element(Constraint(selector, "=ge=", str(start_value)))
+    elif type(start_value) is int and end_value < start_value:
         query_expression.add_element(Constraint(selector, "=gt=", str(end_value)))
         query_expression.add_element(Operator(";"))
-        query_expression.add_element(Constraint(selector, "=le=", str(start_value)))
-    elif end_value is None:
-        query_expression.add_element(Constraint(selector, "=ge=", str(start_value)))
+        query_expression.add_element(Constraint(selector, "=le=", str(start_value)))    
     else:
         query_expression.add_element(Constraint(selector, "=ge=", str(start_value)))
         query_expression.add_element(Operator(";"))
