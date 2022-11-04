@@ -1,3 +1,1 @@
-__version__ = "3.2.0"
-
-from .client import PowerSchool  # noqa: F401
+from .client import PowerSchool  # trunk-ignore(flake8/F401)
