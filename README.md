@@ -90,7 +90,7 @@ schools_table.query(**params)
 **Query a specific record on a table:**
 
 ```python
-schools_table.query(dcid=123)
+schools_table.query(pk=123)
 ```
 
 **Execute a PowerQuery, passing arguments in the body:**
