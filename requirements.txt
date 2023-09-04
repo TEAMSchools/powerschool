@@ -4,8 +4,8 @@ certifi==2023.7.22 \
 charset-normalizer==2.1.1 \
     --hash=sha256:5a3d016c7c547f69d6f81fb0db9449ce888b418b5b9952cc5e6e66843e9dd845 \
     --hash=sha256:83e9a75d1911279afd89352c68b45348559d1fc0506b054b346651b5e7fee29f
-fiql-parser==0.15 \
-    --hash=sha256:6473a04af33234d4c95e9c4ed40450ee24d34ba34f074656304308b70149cdec
+fiql-parser==1.0 \
+    --hash=sha256:df5e4a6c4ab0410122c28cc2d6df16f2a1635ea3bf0eed1f19c87cac437a9e00
 idna==3.4 \
     --hash=sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4 \
     --hash=sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2
